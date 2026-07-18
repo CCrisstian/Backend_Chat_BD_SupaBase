@@ -28,7 +28,7 @@ public class WebSocketLimitInterceptor implements ChannelInterceptor {
         if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
             if (activeSessions.size() >= MAX_USERS) {
                 // Al lanzar esta excepción, Spring Boot aborta el handshake y envía un frame STOMP de tipo ERROR al frontend
-                throw new MessagingException("Servidor lleno: Se ha alcanzado el límite máximo de 4 usuarios conectados.");
+                throw new MessagingException("¡Servidor lleno! Se ha alcanzado el límite máximo de 4 usuarios conectados.");
             }
             activeSessions.add(accessor.getSessionId());
             System.out.println("Usuario conectado al WS. Total activos: " + activeSessions.size());

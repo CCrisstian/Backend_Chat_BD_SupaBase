@@ -7,20 +7,23 @@ import com.cristian.springboot.backend.chat.app.repositories.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Random;
 
 @Service
 public class MessageService {
 
-    private static final String[] COLORS = {
-        "red", "green", "blue", "yellow", "magenta", "purple"
-    };
-
     private final MessageRepository messageRepository;
-    private  final UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
     public MessageService(MessageRepository messageRepository, UsuarioRepository usuarioRepository) {
         this.messageRepository = messageRepository;
         this.usuarioRepository = usuarioRepository;
+    }
+
+    public String getRandomColor() {
+        Random rand = new Random();
+        int nextInt = rand.nextInt(0xffffff + 1);
+        return String.format("#%06x", nextInt);
     }
 
     public List<Message> findAll() {
@@ -32,20 +35,17 @@ public class MessageService {
         return usuarioRepository.findByUsername(usuarioParam.getUsername()).orElseGet(() -> {
             Usuario nuevoUsuario = new Usuario();
             nuevoUsuario.setUsername(usuarioParam.getUsername());
-            String colorRandom = COLORS[(int) (Math.random() * COLORS.length)];
-            nuevoUsuario.setColor(colorRandom);
+            // LLAMAMOS AL MÉTODO AQUÍ para obtener un color nuevo cada vez que se crea un usuario
+            nuevoUsuario.setColor(getRandomColor());
             return usuarioRepository.save(nuevoUsuario);
         });
     }
 
     public Message save(Message message) {
-        // Nos aseguramos de buscar al usuario en la base de datos para que Hibernate
-        // lo reconozca como una entidad existente y administrada con su ID real
         if (message.getUsuario() != null && message.getUsuario().getUsername() != null) {
             Usuario usuarioPersistido = obtenerUsuario(message.getUsuario());
             message.setUsuario(usuarioPersistido);
         }
-
         return messageRepository.save(message);
     }
 }

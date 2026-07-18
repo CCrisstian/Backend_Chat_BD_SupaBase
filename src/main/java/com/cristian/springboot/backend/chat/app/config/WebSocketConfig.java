@@ -19,8 +19,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // PUNTO DE CONEXIÓN: Define la URL a la que se conectará el frontend inicialmente para abrir el WebSocket
         registry.addEndpoint("/chat-websocket")
-                .setAllowedOrigins("http://localhost:4200") // Permite que Angular (u otro cliente local) se conecte sin errores de CORS
-                .withSockJS(); // Soporte alternativo por si el navegador del cliente no soporta WebSockets puros
+                // Usamos patrones para permitir un dominio de Vercel, cualquier preview generada por Vercel y localhost
+                .setAllowedOriginPatterns("https://*.vercel.app", "http://localhost:4200")
+                .withSockJS();
     }
 
     @Override
