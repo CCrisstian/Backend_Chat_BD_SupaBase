@@ -1,9 +1,11 @@
 package com.cristian.springboot.backend.chat.app.config;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessagingException;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -20,6 +22,22 @@ public class WebSocketLimitInterceptor implements ChannelInterceptor {
     private static final int MAX_USERS = 4;
     private final Set<String> activeSessions = ConcurrentHashMap.newKeySet();
 
+    // Inyectamos con @Lazy para evitar dependencias circulares al arrancar Spring
+    private final SimpMessagingTemplate messagingTemplate;
+
+    public WebSocketLimitInterceptor(@Lazy SimpMessagingTemplate messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
+    }
+
+    private void emitirConteoUsuarios() {
+        // Publica el número de usuarios al canal /chat/stats
+        try {
+            messagingTemplate.convertAndSend("/chat/stats", activeSessions.size());
+        } catch (Exception e) {
+            System.err.println("Error enviando estadísticas: " + e.getMessage());
+        }
+    }
+
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
@@ -32,6 +50,9 @@ public class WebSocketLimitInterceptor implements ChannelInterceptor {
             }
             activeSessions.add(accessor.getSessionId());
             System.out.println("Usuario conectado al WS. Total activos: " + activeSessions.size());
+
+            // Emitir el conteo actualizado a todos en la sala
+            emitirConteoUsuarios();
         }
         return message;
     }
