@@ -1,6 +1,7 @@
 package com.cristian.springboot.backend.chat.app.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -15,12 +16,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Autowired
     private WebSocketLimitInterceptor webSocketLimitInterceptor;
 
+    // Inyecta los dominios separados por coma y los convierte automáticamente en un arreglo
+    @Value("${cors.allowed-origins}")
+    private String[] allowedOrigins;
+
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // PUNTO DE CONEXIÓN: Define la URL a la que se conectará el frontend inicialmente para abrir el WebSocket
         registry.addEndpoint("/chat-websocket")
                 // Usamos patrones para permitir un dominio de Vercel, cualquier preview generada por Vercel y localhost
-                .setAllowedOriginPatterns("https://*.vercel.app", "http://localhost:4200")
+                .setAllowedOriginPatterns(allowedOrigins)
                 .withSockJS();
     }
 

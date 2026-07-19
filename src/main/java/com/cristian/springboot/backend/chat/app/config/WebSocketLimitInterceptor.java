@@ -12,6 +12,7 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
+import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,10 +58,28 @@ public class WebSocketLimitInterceptor implements ChannelInterceptor {
         return message;
     }
 
+    // --- SOLUCIÓN AL 0/4 AL CONECTAR - ESCUCHAR LA SUSCRIPCIÓN ---
+    // Se dispara en el milisegundo exacto en que Angular se suscribe a /chat/stats
+    @EventListener
+    public void handleSubscribeListener(SessionSubscribeEvent event) {
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
+        if ("/chat/stats".equals(accessor.getDestination())) {
+            // Garantiza que el usuario recién conectado reciba el número real ni bien se suscribe
+            emitirConteoUsuarios();
+        }
+    }
+
     // Se dispara automáticamente al desconectarse, cerrar pestaña o perder internet
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
         activeSessions.remove(event.getSessionId());
         System.out.println("Usuario desconectado del WS. Total activos: " + activeSessions.size());
+        // Disparamos la actualización para que el número baje en tiempo real
+        emitirConteoUsuarios();
+    }
+
+    // Método para consultar la cantidad de sesiones sin estar conectado al WebSocket
+    public int getActiveSessionsCount() {
+        return activeSessions.size();
     }
 }
