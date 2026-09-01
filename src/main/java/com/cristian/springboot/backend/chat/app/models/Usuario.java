@@ -3,7 +3,7 @@ package com.cristian.springboot.backend.chat.app.models;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "usuarios")
+@Table(name = "usuarios", schema = "chat_bd")
 public class Usuario {
 
     @Id
